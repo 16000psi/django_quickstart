@@ -1,28 +1,23 @@
 import os
 import subprocess
-import shutil
+import argparse
 
 def create_django_project(project_name):
     subprocess.run(['django-admin', 'startproject', project_name])
 
 def add_app_to_installed_apps(project_name, app_name):
     settings_path = f'{project_name}/{project_name}/settings.py'
-    
-    # Read the content of settings.py
+
     with open(settings_path, 'r') as f:
         lines = f.readlines()
-    
-    # Find the line where INSTALLED_APPS is defined
+
     for i, line in enumerate(lines):
         if line.startswith('INSTALLED_APPS = ['):
-            # Add the new app to the INSTALLED_APPS list
             lines[i] = line.rstrip() + f"\n    '{app_name}',\n"
             break
     
-    # Write the modified content back to settings.py
     with open(settings_path, 'w') as f:
         f.writelines(lines)
-
 
 def create_django_app(project_name, app_name):
     # Set the current working directory to the project directory
@@ -50,7 +45,6 @@ urlpatterns = [
     with open(urls_path, 'w') as urls_file:
         urls_file.write(content)
 
-
 def create_home_view(project_name, app_name):
     views_path = f'{project_name}/{app_name}/views.py'
     views_content = """
@@ -64,6 +58,21 @@ class HomeView(View):
     with open(views_path, 'w') as views_file:
         views_file.write(views_content)
 
+def create_statis_css_directory(project_name, app_name):
+    app_dir = f'{project_name}/{app_name}'
+    static_dir = f'{project_name}/{app_name}/static'
+    subprocess.run(['mkdir', 'static'], cwd=app_dir)
+    subprocess.run(['mkdir', 'css'], cwd=static_dir)
+
+def create_css_file(project_name, app_name):
+    css_path = f'{project_name}/{app_name}/static/css/styles.css'
+    css_content = """
+
+"""
+    with open(css_path, 'w') as css_file:
+        css_file.write(css_content)
+
+
 def create_template_directory(project_name, app_name):
     app_dir = f'{project_name}/{app_name}'
     templates_dir = f'{project_name}/{app_name}/templates'
@@ -72,28 +81,59 @@ def create_template_directory(project_name, app_name):
     subprocess.run(['mkdir', 'templates'], cwd=app_dir)
     subprocess.run(['mkdir', app_name], cwd=templates_dir)
 
-def create_home_template(project_name, app_name):
-    templates_path = f'{project_name}/{app_name}/templates/{app_name}/home.html'
-    template_content = """
+def create_base_template(project_name, app_name):
+    templates_path = f'{project_name}/{app_name}/templates/base.html'
+    template_content = """{% load static %}
 <!DOCTYPE html>
 <html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+        <title>{% block title %}Django Project{% endblock %}</title>
+    </head>
     <body>
-        <h2>This is the home page</h2>
-        <p>This software is broken</p>
+        <header>
+        </header>
+
+        <div>
+            {% block content %} {% endblock %}
+        </div>
     </body>
 </html>
 """
     with open(templates_path, 'w') as template_file:
         template_file.write(template_content)
 
+
+def create_home_template(project_name, app_name):
+    templates_path = f'{project_name}/{app_name}/templates/{app_name}/home.html'
+    template_content = """
+{% extends 'base.html' %}
+
+{% block content %}
+        <h2>This is the home page</h2>
+        <p>This software is broken</p>
+{% endblock %}
+"""
+    with open(templates_path, 'w') as template_file:
+        template_file.write(template_content)
+
 if __name__ == '__main__':
-    project_name = 'test_project'
-    app_name = 'test_app'
+    parser = argparse.ArgumentParser(description='Script to set up a Django project.')
+    parser.add_argument('project_name', type=str, help='Name of the Django project')
+    parser.add_argument('app_name', type=str, help='Name of the Django app')
+
+    args = parser.parse_args()
+
+    project_name = args.project_name
+    app_name = args.app_name
     create_django_project(project_name)
     create_django_app(project_name, app_name)
     add_app_to_installed_apps(project_name, app_name)
     configure_project_url_routing(project_name, app_name)
     configure_app_url_routing(project_name, app_name)
     create_home_view(project_name, app_name)
+    create_statis_css_directory(project_name, app_name)
+    create_css_file(project_name, app_name)
     create_template_directory(project_name, app_name)
+    create_base_template(project_name, app_name)
     create_home_template(project_name, app_name)
