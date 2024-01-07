@@ -1,6 +1,6 @@
 ## What am I
 
-### command: django_practice.sh projectname appname
+### command: django_quickstart.sh projectname appname
 
 Th repo festures a python script which sets up a django project and adds a few extra things on top of what you would normally get with startproject:
 
